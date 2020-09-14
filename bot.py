@@ -3,6 +3,7 @@ import random
 import json
 import datetime
 import time
+import requests
 
 from discord.ext import commands, tasks
 from discord import Embed
@@ -689,6 +690,32 @@ async def memberlist(ctx):
         await ctx.send("Leave it. It's out of your league! 😏")
 
 
+@client.command()
+@commands.has_permissions(read_message_history=True)
+async def tmp(ctx, number):
+    result = requests.get(f'https://api.truckersmp.com/v2/player/{number}')
+    result_json = result.json()
+    res = result_json['response']
+
+    name = res['name']
+    avatar = res['avatar']
+    join_date = res['joinDate']
+    banned = res['banned']
+    is_staff = res['permissions']['isStaff']
+    group_color = res['groupColor']
+
+    embed = Embed(description="Requested By: " + ctx.author.display_name,
+                  color=ctx.author.color,
+                  timestamp=datetime.datetime.utcnow())
+    embed.set_thumbnail(url=avatar)
+    embed.add_field(name="IGN", value=name, inline=True)
+    embed.add_field(name="Staff Member", value=is_staff)
+    embed.add_field(name="Current Ban", value=banned, inline=True)
+    embed.add_field(name="Joined Date Time", value=join_date, inline=False)
+
+    await ctx.send(embed=embed)
+        
+        
 # JOINS VOICE CHANNEL
 @client.command()
 @commands.has_permissions(read_message_history=True)
@@ -823,6 +850,12 @@ async def oggy_error(ctx, error):
 async def secret_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("Please add a secret message after %secret. 😟")
+        
+        
+@tmp.error
+async def tmp_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Please add your truckersmp ID after %tmp. 😟")
 
 
 client.run(token)
